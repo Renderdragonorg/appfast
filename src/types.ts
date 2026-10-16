@@ -77,6 +77,8 @@ export interface Metric {
 }
 
 export interface Observation {
+  /** Stable within a bundle, assigned by the orchestrator so findings can cite it. */
+  id: string
   check: CheckName
   kind: string
   tMs: number
@@ -85,6 +87,9 @@ export interface Observation {
   meta?: Record<string, unknown>
   payload: unknown
 }
+
+/** An observation before the orchestrator assigns its id. */
+export type ObservationDraft = Omit<Observation, 'id'>
 
 export type ArtifactKind = 'lighthouseJson' | 'trace' | 'screenshot' | 'har' | 'console'
 

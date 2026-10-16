@@ -15,7 +15,7 @@ One audit of one target, producing one evidence bundle. A run is bounded and rep
 The engine's entire output. A JSON document with a stable shape, plus references to artifacts on disk (traces, screenshots, HAR, console logs). It is the seam between the engine and whatever reads it: an AI agent, a human, or a test. Because the agent consumes it, the bundle is a public interface, not a debug dump.
 
 ## Observation
-A single neutral fact recorded during a run, with no severity, verdict, or recommendation. Every observation shares one envelope: the check it came from, a `kind` naming its payload shape, a timestamp, and the payload itself. The envelope is uniform; the payload varies by kind. See ADR 0018.
+A single neutral fact recorded during a run, with no severity, verdict, or recommendation. Every observation shares one envelope: an `id` (assigned by the orchestrator so findings can cite it), the check it came from, a `kind` naming its payload shape, a timestamp, and the payload itself. The envelope is uniform; the payload varies by kind. See ADR 0018, ADR 0022.
 
 ## Metric
 A numeric reading from a standard lab source (Lighthouse, or a browser timing API). Open: whether a metric is just an observation with a numeric source, or a distinct type. This is the axis the result model turns on.
@@ -40,3 +40,15 @@ Anything that reads the evidence bundle and decides what matters. It is outside 
 
 ## Noise
 Variation between identical runs. Lighthouse is noisy, and a browser under load is noisier. The engine's job is to make noise visible in the bundle, so the agent can tell a real problem from an unlucky sample.
+
+## Reasoner
+A model call shaped as text in, text out: `complete({ system, user })`. The analyze companion takes one from the caller, so the engine never depends on a model. Provider adapters for OpenAI and Anthropic satisfy it.
+
+## Analysis
+The output of `analyze`: a summary plus ranked findings. Produced outside the engine, by reading a bundle. Nondeterministic, because a model writes it.
+
+## Finding
+One judged problem inside an Analysis: a severity, a title, a rationale, an optional recommendation, and evidence references.
+
+## Evidence reference
+A pointer from a finding back into the bundle: either an observation id or a metric name. References that do not resolve in the bundle are dropped.

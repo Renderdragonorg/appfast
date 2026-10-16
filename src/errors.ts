@@ -5,6 +5,7 @@ export type ErrorCode =
   | 'CHECK'
   | 'AUTH_EXPIRED'
   | 'CONFIG'
+  | 'ANALYSIS'
 
 export class RenderDragonError extends Error {
   readonly code: ErrorCode

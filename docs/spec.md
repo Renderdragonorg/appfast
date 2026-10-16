@@ -120,6 +120,7 @@ Checks emit observations. Every observation shares one envelope; the payload var
 
 ```ts
 type Observation = {
+  id: string                // assigned by the orchestrator: `${check}-${repeat}-${index}`
   check: CheckName
   kind: string              // names the payload shape
   tMs: number               // ms from the start of this check
@@ -129,6 +130,8 @@ type Observation = {
   payload: unknown
 }
 ```
+
+Checks produce an `ObservationDraft` (the same shape without `id`); the orchestrator assigns `id`. The id is stable within a bundle and is what a finding cites (ADR 0022).
 
 Each check emits one `*Summary` observation with the complete aggregates, plus a capped list of worst-offender observations (ADR 0019). The cap is `detailRows`, default 20.
 
@@ -376,10 +379,59 @@ The engine fails the run, it does not silently measure the wrong thing.
 }
 ```
 
+## Analysis (companion)
+
+`analyze` is a separate entry from the engine, `renderdragon/analyze` (ADR 0021). The engine holds no model; `analyze` takes one from the caller.
+
+```ts
+import { analyze, createAnthropicReasoner } from 'renderdragon/analyze'
+
+const analysis = await analyze(bundle, createAnthropicReasoner({ model: 'claude-3-5-sonnet-latest' }))
+```
+
+```ts
+interface Reasoner {
+  label: string
+  complete(request: { system: string; user: string }): Promise<string>
+}
+
+function analyze(bundle: Bundle, reasoner: Reasoner, options?: AnalyzeOptions): Promise<Analysis>
+
+interface AnalyzeOptions {
+  maxDigestChars?: number      // default 16000
+  validationRetries?: number   // default 1
+}
+
+interface Analysis {
+  summary: string
+  findings: Finding[]
+  analyzedAt: string           // ISO 8601
+  reasoner: string             // the reasoner's label, e.g. "anthropic:claude-3-5-sonnet-latest"
+}
+
+interface Finding {
+  id: string
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info'
+  title: string
+  rationale: string
+  evidence: EvidenceRef[]
+  recommendation?: string
+}
+
+interface EvidenceRef {
+  kind: 'observation' | 'metric'
+  ref: string                  // an Observation id, or a Metric name
+}
+```
+
+`analyze` sends the bundle as a digest (metrics with thresholds, observations with their ids, artifact paths, caveats), asks the reasoner for JSON of the `Analysis` shape, and validates it. Evidence references that do not resolve in the bundle are dropped. Invalid output gets one repair retry, then a `RenderDragonError` with code `ANALYSIS`.
+
+Shipped adapters: `createOpenAiReasoner` and `createAnthropicReasoner`, implemented with `fetch` (no SDK dependency). Both read their key from an option or from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`.
+
 ## Non-goals
 
-- No score, rating, or verdict. The engine records facts; the agent judges (ADR 0003).
-- No LLM inside the engine (ADR 0004).
+- No score, rating, or verdict from the engine. The engine records facts; judging happens in the separate `analyze` companion, which the caller supplies a model to (ADR 0003, ADR 0021).
+- No LLM inside the engine. `analyze` is a separate entry and takes a reasoner from the caller (ADR 0004, ADR 0021).
 - No field data. This is lab only; CrUX is out because most personal-project origins don't qualify (ADR 0001 context).
 - No scripted login or multi-step journeys. Auth is an injected session plus a refresh callback.
 - No CLI, server, or dashboard. The library is the product; wrappers can sit on top later.

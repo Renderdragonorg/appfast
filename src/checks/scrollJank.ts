@@ -1,5 +1,5 @@
 import type { Page } from 'puppeteer-core'
-import type { Observation } from '../types.js'
+import type { ObservationDraft } from '../types.js'
 import type { Check } from './types.js'
 
 /** Frame budget: one 60fps frame, in milliseconds. */
@@ -153,7 +153,7 @@ export const scrollJank: Check = {
     const budgetMs = FRAME_BUDGET_MS
     const samples = await sampleScroll(page, SCROLL_DURATION_MS, SCROLL_STEP_PX)
 
-    const observations: Observation[] = [
+    const observations: ObservationDraft[] = [
       {
         check: 'scrollJank',
         kind: 'scrollSummary',

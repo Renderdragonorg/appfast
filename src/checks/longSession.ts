@@ -1,5 +1,5 @@
 import type { Check, CheckContext } from './types.js'
-import type { Observation } from '../types.js'
+import type { ObservationDraft } from '../types.js'
 
 export interface LongSessionRaw {
   durationMs: number
@@ -149,7 +149,7 @@ export const longSession: Check = {
       longTaskCount: raw.longTaskCount,
     })
 
-    const observations: Observation[] = [
+    const observations: ObservationDraft[] = [
       {
         check: 'longSession',
         kind: 'longSessionSummary',

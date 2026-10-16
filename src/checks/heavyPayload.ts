@@ -1,5 +1,5 @@
 import type { Check, CheckContext } from './types.js'
-import type { Observation } from '../types.js'
+import type { ObservationDraft } from '../types.js'
 
 export interface HeavyPayloadLongTask {
   durationMs: number
@@ -162,7 +162,7 @@ export const heavyPayload: Check = {
     const summary = assembleHeavyPayloadSummary(raw)
     const worst = worstLayoutTasks(raw, ctx.detailRows)
 
-    const observations: Observation[] = [
+    const observations: ObservationDraft[] = [
       {
         check: 'heavyPayload',
         kind: 'heavyPayloadSummary',

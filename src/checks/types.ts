@@ -1,5 +1,5 @@
 import type { Page } from 'puppeteer-core'
-import type { CheckName, Observation, ResolvedTarget } from '../types.js'
+import type { CheckName, ObservationDraft, ResolvedTarget } from '../types.js'
 
 export interface CheckContext {
   page: Page
@@ -11,5 +11,5 @@ export interface CheckContext {
 
 export interface Check {
   name: CheckName
-  run(ctx: CheckContext): Promise<Observation[]>
+  run(ctx: CheckContext): Promise<ObservationDraft[]>
 }

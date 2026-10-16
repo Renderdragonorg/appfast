@@ -56,6 +56,19 @@ The default set runs on a shared, warmed browser:
 
 `longSession` (memory and DOM growth over minutes) is opt-in, since it is the slow one.
 
+## Judging a bundle
+
+The engine does not score, rank, or recommend. A separate entry produces the judged result from a bundle, using a model you supply:
+
+```ts
+import { analyze, createAnthropicReasoner } from 'renderdragon/analyze'
+
+const analysis = await analyze(bundle, createAnthropicReasoner({ model: 'claude-3-5-sonnet-latest' }))
+analysis.findings // ranked, each with a severity, rationale, and evidence references
+```
+
+Adapters for OpenAI and Anthropic ship with it and read `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` (or take a key). The engine itself has no model dependency; only this entry does.
+
 ## Design
 
 The decisions behind the shape live in [docs/adr](docs/adr), with a glossary in [docs/glossary.md](docs/glossary.md) and a full spec in [docs/spec.md](docs/spec.md). Read the spec before changing the interface.

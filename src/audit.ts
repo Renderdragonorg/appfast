@@ -6,7 +6,7 @@ import { resolveTarget } from './defaults.js'
 import { RenderDragonError } from './errors.js'
 import { runLighthouseCold, type RawMetricSample } from './lighthouse/index.js'
 import { aggregateMetrics } from './metrics.js'
-import type { Artifact, Bundle, Observation, Target } from './types.js'
+import type { Artifact, Bundle, Observation, ObservationDraft, Target } from './types.js'
 import { BUNDLE_VERSION, ENGINE_VERSION } from './version.js'
 import { writeBundle } from './bundle/writer.js'
 
@@ -42,21 +42,23 @@ export async function audit(target: Target): Promise<Bundle> {
       const warm = repeat > 0
       for (const name of resolved.checks) {
         const check = CHECKS[name]
+        let drafts: ObservationDraft[]
         try {
-          observations.push(
-            ...(await check.run({
-              page,
-              target: resolved,
-              repeat,
-              warm,
-              detailRows: resolved.detailRows,
-            })),
-          )
+          drafts = await check.run({
+            page,
+            target: resolved,
+            repeat,
+            warm,
+            detailRows: resolved.detailRows,
+          })
         } catch (error) {
           if (error instanceof RenderDragonError) throw error
           const detail = error instanceof Error ? error.message : String(error)
           throw new RenderDragonError('CHECK', `Check ${name} failed: ${detail}`, { cause: error })
         }
+        drafts.forEach((draft, index) => {
+          observations.push({ ...draft, id: `${name}-${repeat}-${index}` })
+        })
       }
     }
   } finally {

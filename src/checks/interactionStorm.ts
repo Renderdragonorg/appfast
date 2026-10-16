@@ -1,6 +1,6 @@
 import type { Page } from 'puppeteer-core'
 import type { Check, CheckContext } from './types.js'
-import type { Observation } from '../types.js'
+import type { ObservationDraft } from '../types.js'
 import { percentile, selectWorst } from './heavyPayload.js'
 
 export type InteractionKind = 'click' | 'key' | 'route'
@@ -158,7 +158,7 @@ export const interactionStorm: Check = {
     const dropped = Math.max(0, driven - eventSamples.length)
     const { summary, worst } = summarizeInteractions(samples, dropped, detailRows)
 
-    const observations: Observation[] = [
+    const observations: ObservationDraft[] = [
       {
         check: 'interactionStorm',
         kind: 'interactionStormSummary',
