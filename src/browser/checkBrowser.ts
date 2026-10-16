@@ -1,5 +1,6 @@
 import { launch } from 'chrome-launcher'
 import puppeteer, { type Browser, type Page } from 'puppeteer-core'
+import { RenderDragonError } from '../errors.js'
 import type { ResolvedTarget, ThrottleProfile } from '../types.js'
 
 export interface CheckBrowser {
@@ -74,17 +75,22 @@ export function resolveThrottle(profile: ThrottleProfile): CdpThrottle {
 export async function launchCheckBrowser(input: CheckBrowserInput): Promise<CheckBrowser> {
   const { target } = input
 
-  const chrome = await launch({
-    chromePath: process.env.RENDERDRAGON_CHROME_PATH || undefined,
-    chromeFlags: ['--headless=new'],
-  })
+  let chrome: Awaited<ReturnType<typeof launch>>
+  try {
+    chrome = await launch({
+      chromePath: process.env.RENDERDRAGON_CHROME_PATH || undefined,
+      chromeFlags: ['--headless=new'],
+    })
+  } catch (error) {
+    throw new RenderDragonError('BROWSER_LAUNCH', 'Failed to launch the check browser', { cause: error })
+  }
 
   let browser: Browser
   try {
     browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chrome.port}` })
   } catch (error) {
     await chrome.kill()
-    throw error
+    throw new RenderDragonError('BROWSER_LAUNCH', 'Failed to connect to the check browser', { cause: error })
   }
 
   try {

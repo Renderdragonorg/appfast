@@ -36,7 +36,7 @@ const allCheckNames = ['scrollJank', 'heavyPayload', 'interactionStorm', 'longSe
 function resetDefaults() {
   h.runLighthouseCold.mockResolvedValue({ samples: [], artifacts: [] })
   h.launchCheckBrowser.mockImplementation(async () => ({ page: {}, close: h.close }))
-  h.ensureSession.mockResolvedValue({})
+  h.ensureSession.mockResolvedValue({ page: {}, refreshed: false })
   h.writeBundle.mockResolvedValue(undefined)
   h.close.mockResolvedValue(undefined)
   for (const name of allCheckNames) {
@@ -100,12 +100,23 @@ describe('audit', () => {
     expect(calls.map((c) => (c[0] as { warm: boolean }).warm)).toEqual([false, true])
   })
 
-  it('closes the check browser and rethrows when a check fails', async () => {
+  it('closes the check browser and wraps a check failure as CHECK', async () => {
     h.CHECKS.scrollJank.run.mockRejectedValue(new Error('boom'))
 
-    await expect(audit({ url: 'https://example.com' })).rejects.toThrow('boom')
+    await expect(audit({ url: 'https://example.com' })).rejects.toMatchObject({
+      name: 'RenderDragonError',
+      code: 'CHECK',
+      message: expect.stringContaining('scrollJank'),
+    })
     expect(h.close).toHaveBeenCalledTimes(1)
     expect(h.writeBundle).not.toHaveBeenCalled()
+  })
+
+  it('records a caveat when auth was refreshed mid-run', async () => {
+    h.ensureSession.mockResolvedValue({ page: {}, refreshed: true })
+
+    const bundle = await audit({ url: 'https://example.com' })
+    expect(bundle.caveats.some((c) => /refreshed/.test(c))).toBe(true)
   })
 
   it('passes the resolved output directory to the bundle writer', async () => {

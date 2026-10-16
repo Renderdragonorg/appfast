@@ -136,7 +136,7 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
     })
     const { browser, checkBrowser } = await newBrowser()
     try {
-      const loaded = await ensureSession(
+      const { page: loaded, refreshed } = await ensureSession(
         checkBrowser,
         makeTarget({
           url: `${server.url}/app`,
@@ -144,6 +144,7 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
           cookies: [{ name: 'sid', value: 'abc', domain: '127.0.0.1', path: '/' }],
         }),
       )
+      expect(refreshed).toBe(false)
       const body = await loaded.evaluate(() => document.body.innerText)
       expect(body).toContain('header=1')
       expect(body).toContain('sid=abc')
@@ -191,7 +192,7 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
     const { browser, checkBrowser } = await newBrowser()
     let refreshCalls = 0
     try {
-      const loaded = await ensureSession(
+      const { page: loaded, refreshed } = await ensureSession(
         checkBrowser,
         makeTarget({
           url: `${server.url}/app`,
@@ -201,6 +202,7 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
           },
         }),
       )
+      expect(refreshed).toBe(true)
       expect(refreshCalls).toBe(1)
       expect(await loaded.evaluate(() => document.body.innerText)).toBe('app')
     } finally {
@@ -239,5 +241,25 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
       await browser.close()
       await server.close()
     }
+  })
+})
+
+describe('ensureSession navigation failures', () => {
+  it('wraps a navigation failure as a NAVIGATION error with the url', async () => {
+    const page = {
+      setExtraHTTPHeaders: async () => {},
+      setCookie: async () => {},
+      setViewport: async () => {},
+      goto: async () => {
+        throw new Error('net::ERR_CONNECTION_REFUSED')
+      },
+    } as unknown as import('puppeteer-core').Page
+    const browser: CheckBrowser = { page, close: async () => {} }
+
+    await expect(ensureSession(browser, makeTarget({ url: 'http://127.0.0.1:9/app' }))).rejects.toMatchObject({
+      name: 'RenderDragonError',
+      code: 'NAVIGATION',
+      message: expect.stringContaining('http://127.0.0.1:9/app'),
+    })
   })
 })

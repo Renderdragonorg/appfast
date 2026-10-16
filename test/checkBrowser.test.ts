@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { kbpsToBytesPerSecond, resolveThrottle } from '../src/browser/checkBrowser.js'
 import { resolveTarget } from '../src/defaults.js'
 
@@ -46,19 +48,26 @@ const hasChrome = Boolean(process.env.RENDERDRAGON_CHROME_PATH)
 describe.skipIf(!hasChrome)('launchCheckBrowser (requires RENDERDRAGON_CHROME_PATH)', () => {
   it('launches headless Chrome, sets the viewport, and closes cleanly', async () => {
     const { launchCheckBrowser } = await import('../src/browser/checkBrowser.js')
+    const server = createServer((_req, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/html' })
+      res.end('<h1>hi</h1>')
+    })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const { port } = server.address() as AddressInfo
     const target = resolveTarget({
-      url: 'data:text/html,<h1>hi</h1>',
+      url: `http://127.0.0.1:${port}/`,
       throttle: 'desktop',
       viewport: { width: 800, height: 600 },
     })
     const browser = await launchCheckBrowser({ target })
     try {
-      await browser.page.goto(target.url)
+      await browser.page.goto(target.url, { timeout: 60000 })
       const viewport = browser.page.viewport()
       expect(viewport?.width).toBe(800)
       expect(viewport?.height).toBe(600)
     } finally {
       await browser.close()
+      await new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve())))
     }
   })
 })

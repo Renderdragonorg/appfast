@@ -57,8 +57,19 @@ async function applyCredentials(
 }
 
 async function navigate(page: Page, target: ResolvedTarget): Promise<Page> {
-  await page.goto(target.url, { waitUntil: 'networkidle2', timeout: NAVIGATION_TIMEOUT_MS })
-  return page
+  try {
+    await page.goto(target.url, { waitUntil: 'networkidle2', timeout: NAVIGATION_TIMEOUT_MS })
+    return page
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error)
+    throw new RenderDragonError('NAVIGATION', `Navigation to ${target.url} failed: ${detail}`, { cause: error })
+  }
+}
+
+/** The loaded page plus whether credentials were refreshed to get there. */
+export interface SessionResult {
+  page: Page
+  refreshed: boolean
 }
 
 /**
@@ -66,14 +77,15 @@ async function navigate(page: Page, target: ResolvedTarget): Promise<Page> {
  * target URL. On a detected logout it calls `target.refreshAuth`, re-applies the
  * returned credentials, and retries once; if still logged out, or no refresh is
  * supplied, it throws `RenderDragonError` with code `AUTH_EXPIRED` (ADR 0020).
+ * Reports whether a refresh happened so the orchestrator can add a caveat.
  */
-export async function ensureSession(browser: CheckBrowser, target: ResolvedTarget): Promise<Page> {
+export async function ensureSession(browser: CheckBrowser, target: ResolvedTarget): Promise<SessionResult> {
   const page = browser.page
   await applyCredentials(page, target)
   await page.setViewport(target.viewport)
 
   let loaded = await navigate(page, target)
-  if (!isLoggedOut(target.url, loaded.url())) return loaded
+  if (!isLoggedOut(target.url, loaded.url())) return { page: loaded, refreshed: false }
 
   if (!target.refreshAuth) {
     throw new RenderDragonError(
@@ -92,5 +104,5 @@ export async function ensureSession(browser: CheckBrowser, target: ResolvedTarge
   if (isLoggedOut(target.url, loaded.url())) {
     throw new RenderDragonError('AUTH_EXPIRED', `Still logged out after refresh at ${loaded.url()}`)
   }
-  return loaded
+  return { page: loaded, refreshed: true }
 }

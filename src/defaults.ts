@@ -1,5 +1,6 @@
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { RenderDragonError } from './errors.js'
 import type { CheckName, ResolvedTarget, Target, ThrottleProfile, Viewport } from './types.js'
 
 export const DEFAULT_RUNS = 1
@@ -14,7 +15,20 @@ export function defaultViewport(throttle: ThrottleProfile): Viewport {
   return throttle === 'desktop' ? DESKTOP_VIEWPORT : MOBILE_VIEWPORT
 }
 
+function assertHttpUrl(url: string): void {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new RenderDragonError('CONFIG', `Target url is not a valid URL: ${String(url)}`)
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new RenderDragonError('CONFIG', `Target url must be http or https, got ${parsed.protocol}`)
+  }
+}
+
 export function resolveTarget(target: Target): ResolvedTarget {
+  assertHttpUrl(target.url)
   const throttle = target.throttle ?? DEFAULT_THROTTLE
   const resolved: ResolvedTarget = {
     url: target.url,

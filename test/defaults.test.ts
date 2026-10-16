@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_CHECKS, DEFAULT_RUNS, resolveTarget } from '../src/defaults.js'
 
+function captureError(fn: () => unknown): unknown {
+  try {
+    fn()
+  } catch (error) {
+    return error
+  }
+  return undefined
+}
+
 describe('resolveTarget', () => {
   it('applies documented defaults to a bare url', () => {
     const resolved = resolveTarget({ url: 'https://example.com' })
@@ -27,5 +36,13 @@ describe('resolveTarget', () => {
     expect(resolved.runs).toBe(3)
     expect(resolved.throttle).toBe('desktop')
     expect(resolved.checks).toEqual(['longSession'])
+  })
+
+  it('rejects a malformed url with a CONFIG error', () => {
+    expect(captureError(() => resolveTarget({ url: 'not a url' }))).toMatchObject({ code: 'CONFIG' })
+  })
+
+  it('rejects a non-http protocol with a CONFIG error', () => {
+    expect(captureError(() => resolveTarget({ url: 'ftp://example.com' }))).toMatchObject({ code: 'CONFIG' })
   })
 })

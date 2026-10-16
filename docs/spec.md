@@ -252,13 +252,11 @@ Directory layout, one folder per repeat:
   run-0/
     lighthouse.json
     trace.json
-    screenshot.png
+    screenshot.webp
     console.log
-  run-1/
-    ...
 ```
 
-Paths in the bundle are relative to `outputDir` and forward-slashed.
+Paths in the bundle are relative to `outputDir` and forward-slashed. The screenshot extension follows its mime type; Lighthouse emits webp for the full-page screenshot.
 
 ## Bundle
 
@@ -372,7 +370,7 @@ The engine fails the run, it does not silently measure the wrong thing.
   "artifacts": [
     { "kind": "lighthouseJson", "path": "run-0/lighthouse.json", "bytes": 812344, "mimeType": "application/json" },
     { "kind": "trace", "path": "run-0/trace.json", "bytes": 24110992, "mimeType": "application/json" },
-    { "kind": "screenshot", "path": "run-0/screenshot.png", "bytes": 184223, "mimeType": "image/png" }
+    { "kind": "screenshot", "path": "run-0/screenshot.webp", "bytes": 184223, "mimeType": "image/webp" }
   ],
   "caveats": []
 }

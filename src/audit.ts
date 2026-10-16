@@ -3,6 +3,7 @@ import type { CheckBrowser } from './browser/checkBrowser.js'
 import { launchCheckBrowser } from './browser/checkBrowser.js'
 import { CHECKS } from './checks/registry.js'
 import { resolveTarget } from './defaults.js'
+import { RenderDragonError } from './errors.js'
 import { runLighthouseCold, type RawMetricSample } from './lighthouse/index.js'
 import { aggregateMetrics } from './metrics.js'
 import type { Artifact, Bundle, Observation, Target } from './types.js'
@@ -24,6 +25,7 @@ export async function audit(target: Target): Promise<Bundle> {
   const observations: Observation[] = []
   const artifacts: Artifact[] = []
   const caveats: string[] = []
+  let authRefreshed = false
 
   let browser: CheckBrowser | undefined
   try {
@@ -35,19 +37,26 @@ export async function audit(target: Target): Promise<Bundle> {
       if (resolved.checks.length === 0) continue
 
       browser ??= await launchCheckBrowser({ target: resolved })
-      const page = await ensureSession(browser, resolved)
+      const { page, refreshed } = await ensureSession(browser, resolved)
+      if (refreshed) authRefreshed = true
       const warm = repeat > 0
       for (const name of resolved.checks) {
         const check = CHECKS[name]
-        observations.push(
-          ...(await check.run({
-            page,
-            target: resolved,
-            repeat,
-            warm,
-            detailRows: resolved.detailRows,
-          })),
-        )
+        try {
+          observations.push(
+            ...(await check.run({
+              page,
+              target: resolved,
+              repeat,
+              warm,
+              detailRows: resolved.detailRows,
+            })),
+          )
+        } catch (error) {
+          if (error instanceof RenderDragonError) throw error
+          const detail = error instanceof Error ? error.message : String(error)
+          throw new RenderDragonError('CHECK', `Check ${name} failed: ${detail}`, { cause: error })
+        }
       }
     }
   } finally {
@@ -56,6 +65,9 @@ export async function audit(target: Target): Promise<Bundle> {
 
   if (resolved.runs > 1 && resolved.checks.length > 0) {
     caveats.push('Check repeats after the first ran on a warmed browser (see ADR 0014).')
+  }
+  if (authRefreshed) {
+    caveats.push('Auth credentials were refreshed mid-run (see ADR 0020).')
   }
 
   const bundle: Bundle = {
