@@ -1,15 +1,18 @@
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import type { Bundle } from '../types.js'
 
 /**
- * Writes the bundle JSON into outputDir. Creates outputDir if needed, never
- * deletes anything (ADR 0009). Normalizes artifact paths to forward slashes and
- * writes `bundle.json` at the root of outputDir. Does not add itself to
- * `bundle.artifacts`.
- *
- * Owner: bundle/auth thread.
+ * Writes the bundle as `${outputDir}/bundle.json` (2-space JSON plus a trailing
+ * newline), creating outputDir if needed. Normalizes every artifact path to
+ * forward slashes. Never deletes anything, and does not add itself to
+ * `bundle.artifacts` (ADR 0009).
  */
 export async function writeBundle(bundle: Bundle, outputDir: string): Promise<void> {
-  void bundle
-  void outputDir
-  throw new Error('writeBundle not implemented')
+  for (const artifact of bundle.artifacts) {
+    artifact.path = artifact.path.replace(/\\/g, '/')
+  }
+  await mkdir(outputDir, { recursive: true })
+  const json = `${JSON.stringify(bundle, null, 2)}\n`
+  await writeFile(join(outputDir, 'bundle.json'), json, 'utf8')
 }
