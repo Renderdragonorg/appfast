@@ -69,6 +69,17 @@ analysis.findings // ranked, each with a severity, rationale, and evidence refer
 
 Adapters for OpenAI and Anthropic ship with it and read `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` (or take a key). The engine itself has no model dependency; only this entry does.
 
+## Command line
+
+The same package ships a thin `renderdragon` binary:
+
+```
+renderdragon audit https://example.com --out ./renderdragon-out
+renderdragon analyze ./renderdragon-out/bundle.json --provider anthropic
+```
+
+`audit` writes the bundle and prints a metric summary (`--json` prints the bundle). `analyze` judges a bundle with a model whose provider is inferred from the environment keys unless `--provider` is given.
+
 ## Design
 
 The decisions behind the shape live in [docs/adr](docs/adr), with a glossary in [docs/glossary.md](docs/glossary.md) and a full spec in [docs/spec.md](docs/spec.md). Read the spec before changing the interface.

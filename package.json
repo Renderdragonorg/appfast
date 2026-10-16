@@ -18,6 +18,9 @@
   "files": [
     "dist"
   ],
+  "bin": {
+    "renderdragon": "./dist/cli.js"
+  },
   "engines": {
     "node": ">=20"
   },

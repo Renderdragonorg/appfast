@@ -428,11 +428,15 @@ interface EvidenceRef {
 
 Shipped adapters: `createOpenAiReasoner` and `createAnthropicReasoner`, implemented with `fetch` (no SDK dependency). Both read their key from an option or from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`.
 
+## CLI
+
+A thin `renderdragon` binary wraps both entries (ADR 0023): `audit <url>` calls the engine and writes a bundle, `analyze <bundle.json>` calls the companion. It adds no logic beyond argument parsing and printing, and `--json` makes both commands scriptable.
+
 ## Non-goals
 
 - No score, rating, or verdict from the engine. The engine records facts; judging happens in the separate `analyze` companion, which the caller supplies a model to (ADR 0003, ADR 0021).
 - No LLM inside the engine. `analyze` is a separate entry and takes a reasoner from the caller (ADR 0004, ADR 0021).
 - No field data. This is lab only; CrUX is out because most personal-project origins don't qualify (ADR 0001 context).
 - No scripted login or multi-step journeys. Auth is an injected session plus a refresh callback.
-- No CLI, server, or dashboard. The library is the product; wrappers can sit on top later.
+- No server or dashboard. A thin CLI ships as a wrapper over the two entries (ADR 0023); the library is still the product.
 - No browser driver interface. The two browser paths stay concrete (ADR 0016).
