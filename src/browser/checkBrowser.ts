@@ -83,7 +83,7 @@ export async function launchCheckBrowser(input: CheckBrowserInput): Promise<Chec
   try {
     browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chrome.port}` })
   } catch (error) {
-    chrome.kill()
+    await chrome.kill()
     throw error
   }
 
@@ -105,12 +105,12 @@ export async function launchCheckBrowser(input: CheckBrowserInput): Promise<Chec
       page,
       async close() {
         await browser.disconnect()
-        chrome.kill()
+        await chrome.kill()
       },
     }
   } catch (error) {
     await browser.disconnect().catch(() => {})
-    chrome.kill()
+    await chrome.kill()
     throw error
   }
 }

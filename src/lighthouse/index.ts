@@ -175,6 +175,6 @@ export async function runLighthouseCold(input: LighthouseInput): Promise<Lightho
     if (error instanceof RenderDragonError) throw error
     throw new RenderDragonError('LIGHTHOUSE', `Lighthouse run failed for ${target.url}`, { cause: error })
   } finally {
-    chrome.kill()
+    await chrome.kill()
   }
 }

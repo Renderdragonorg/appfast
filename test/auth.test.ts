@@ -177,7 +177,10 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
 
   it('refreshes once and succeeds when the refreshed cookie unlocks the app', async () => {
     const server = await startServer((req, res) => {
-      if ((req.headers.cookie ?? '').includes('sid=good')) {
+      if (req.url === '/login') {
+        res.writeHead(200, { 'Content-Type': 'text/html' })
+        res.end('<html><body>login</body></html>')
+      } else if ((req.headers.cookie ?? '').includes('sid=good')) {
         res.writeHead(200, { 'Content-Type': 'text/html' })
         res.end('<html><body>app</body></html>')
       } else {
@@ -207,9 +210,14 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
   })
 
   it('throws AUTH_EXPIRED after one failed refresh', async () => {
-    const server = await startServer((_req, res) => {
-      res.writeHead(302, { Location: '/login' })
-      res.end()
+    const server = await startServer((req, res) => {
+      if (req.url === '/login') {
+        res.writeHead(200, { 'Content-Type': 'text/html' })
+        res.end('<html><body>login</body></html>')
+      } else {
+        res.writeHead(302, { Location: '/login' })
+        res.end()
+      }
     })
     const { browser, checkBrowser } = await newBrowser()
     let refreshCalls = 0
