@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { analyze as analyzeBundle } from './analyze/analyze.js'
 import { createAnthropicReasoner } from './analyze/reasoners/anthropic.js'
 import { createOpenAiReasoner } from './analyze/reasoners/openai.js'
+import { createOpenCodeReasoner } from './analyze/reasoners/opencode.js'
 import type { Analysis, Reasoner } from './analyze/types.js'
 import { audit } from './audit.js'
 import { RenderDragonError } from './errors.js'
@@ -20,7 +21,7 @@ Commands:
     --json                     print the bundle as JSON
 
   analyze <bundle.json> [options]   judge a bundle with a model
-    --provider anthropic|openai     default: inferred from env keys
+    --provider anthropic|openai|opencode   default: inferred from env keys
     --model <name>                  default: the adapter's default
     --json                          print the analysis as JSON
 
@@ -208,7 +209,7 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
     if (!provider) {
       throw new RenderDragonError(
         'CONFIG',
-        'No provider: pass --provider, or set ANTHROPIC_API_KEY or OPENAI_API_KEY',
+        'No provider: pass --provider (anthropic, openai, opencode), or set ANTHROPIC_API_KEY or OPENAI_API_KEY',
       )
     }
     const bundle = JSON.parse(await deps.readTextFile(parsed.file)) as Bundle
@@ -229,6 +230,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
     createReasoner: (provider, model) => {
       if (provider === 'anthropic') return createAnthropicReasoner(model ? { model } : {})
       if (provider === 'openai') return createOpenAiReasoner(model ? { model } : {})
+      if (provider === 'opencode') return createOpenCodeReasoner(model ? { model } : {})
       throw new RenderDragonError('CONFIG', `Unknown provider: ${provider}`)
     },
     readTextFile: (path) => readFile(path, 'utf8'),

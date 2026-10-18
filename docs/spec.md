@@ -426,11 +426,11 @@ interface EvidenceRef {
 
 `analyze` sends the bundle as a digest (metrics with thresholds, observations with their ids, artifact paths, caveats), asks the reasoner for JSON of the `Analysis` shape, and validates it. Evidence references that do not resolve in the bundle are dropped. Invalid output gets one repair retry, then a `RenderDragonError` with code `ANALYSIS`.
 
-Shipped adapters: `createOpenAiReasoner` and `createAnthropicReasoner`, implemented with `fetch` (no SDK dependency). Both read their key from an option or from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`.
+Shipped adapters: `createOpenAiReasoner` and `createAnthropicReasoner`, implemented with `fetch` (no SDK dependency), plus `createOpenCodeReasoner`. The first two read their key from an option or from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`. The OpenCode adapter spawns `opencode2 run --format json` and uses the caller's existing OpenCode login, so it needs no key (ADR 0024).
 
 ## CLI
 
-A thin `renderdragon` binary wraps both entries (ADR 0023): `audit <url>` calls the engine and writes a bundle, `analyze <bundle.json>` calls the companion. It adds no logic beyond argument parsing and printing, and `--json` makes both commands scriptable.
+A thin `renderdragon` binary wraps both entries (ADR 0023): `audit <url>` calls the engine and writes a bundle, `analyze <bundle.json>` calls the companion. It adds no logic beyond argument parsing and printing, and `--json` makes both commands scriptable. `analyze --provider opencode` runs the model through OpenCode instead of a provider key.
 
 ## Non-goals
 

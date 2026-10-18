@@ -2,9 +2,11 @@
 
 # RenderDragon
 
-A web performance audit library. It loads a page in a real browser, runs Lighthouse plus a set of synthetic checks, and returns an evidence bundle describing what it observed. It does not score, rank, or recommend. A downstream agent reads the bundle and decides what matters.
+RenderDragon loads a page in a real browser, runs Lighthouse and three synthetic checks, and writes a JSON evidence bundle. The bundle holds numbers and events, not scores or advice.
 
-Status: early. The public types and the `audit()` orchestration are in place; the Lighthouse path, the browser driver, and the checks are being implemented.
+A second entry, `renderdragon/analyze`, reads a bundle and returns ranked findings. You give it a model: an OpenAI key, an Anthropic key, or a model already signed in to OpenCode V2.
+
+Status: working. The engine, checks, analysis entry, and CLI run end to end. Browser-dependent tests need Chrome.
 
 ## Install
 
@@ -22,12 +24,12 @@ console.log(bundle.metrics)       // lcp, cls, tbt, ttfb, fcp, speedIndex with s
 console.log(bundle.observations)  // scroll jank, heavy payload, interaction storm
 ```
 
-Pass configuration in the target:
+Configure the target when the defaults are wrong:
 
 ```ts
 await audit({
   url: 'https://example.com',
-  runs: 3,                    // default 1; more runs give a real median and spread
+  runs: 3,                    // default 1
   throttle: 'desktop',        // default 'mobile' (4x CPU, Slow 4G)
   checks: ['scrollJank'],     // default scrollJank, heavyPayload, interactionStorm
   headers: { Authorization: 'Bearer ...' },
@@ -37,52 +39,70 @@ await audit({
 })
 ```
 
+One repeat is one Lighthouse cold load on its own Chrome, then a navigation in a shared, warmed check browser. The checks run there. With `runs: 3` you get three of those, and each metric carries a median, min, max, and the raw values.
+
 ## What you get
 
-`audit()` resolves to a `Bundle` with a stable shape:
-
-- `metrics`: the curated core set (`lcp`, `cls`, `tbt`, `ttfb`, `fcp`, `speedIndex`), each with median, min, max, the raw per-run values, and threshold context. No rating.
-- `observations`: neutral, event-shaped facts from the checks, each with a `check`, a `kind`, and a payload.
-- `artifacts`: paths to the raw Lighthouse report, traces, and screenshots, relative to `outputDir`.
-- `bundleVersion` and `engineVersion`, so a reader knows which shape it is reading and which build produced it.
+- `metrics`: six lab numbers, each with median, min, max, per-run values, and threshold context. No rating.
+- `observations`: neutral events from the checks, each with an `id`, a `check`, a `kind`, and a payload. An `id` is what a finding cites.
+- `artifacts`: paths to the Lighthouse report, traces, and screenshots, relative to `outputDir`.
+- `bundleVersion`, `engineVersion`, and `caveats`, so a reader knows which shape it has and what went wrong during the run.
 
 ## Checks
 
-The default set runs on a shared, warmed browser:
+The default set runs on the shared browser:
 
-- `scrollJank`: scrolls the loaded page under throttling and records frame timing.
-- `heavyPayload`: measures render and interaction cost under a large DOM, many images, and a lot of data.
-- `interactionStorm`: drives rapid input and route changes and measures INP under stress.
+- `scrollJank` scrolls the page under throttling and records frame timing.
+- `heavyPayload` measures render and interaction cost under a large DOM, many images, and a lot of data.
+- `interactionStorm` drives rapid input and route changes and measures INP under stress.
 
-`longSession` (memory and DOM growth over minutes) is opt-in, since it is the slow one.
+`longSession` (memory and DOM growth over minutes) is opt-in because it is slow.
 
 ## Judging a bundle
-
-The engine does not score, rank, or recommend. A separate entry produces the judged result from a bundle, using a model you supply:
 
 ```ts
 import { analyze, createAnthropicReasoner } from 'renderdragon/analyze'
 
 const analysis = await analyze(bundle, createAnthropicReasoner({ model: 'claude-3-5-sonnet-latest' }))
-analysis.findings // ranked, each with a severity, rationale, and evidence references
+analysis.findings // ranked, each with severity, rationale, and evidence references
 ```
 
-Adapters for OpenAI and Anthropic ship with it and read `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` (or take a key). The engine itself has no model dependency; only this entry does.
+OpenAI and Anthropic adapters ship with the package and read `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` unless you pass a key. The analyzer checks model output before returning it: unknown evidence references are dropped, and invalid JSON gets one repair retry.
+
+## Running analysis through OpenCode
+
+If OpenCode V2 is already signed in, you can skip provider keys:
+
+```
+renderdragon analyze ./audit/bundle.json --provider opencode --model opencode-go/glm-5.3-flash
+```
+
+```ts
+import { analyze, createOpenCodeReasoner } from 'renderdragon/analyze'
+
+const analysis = await analyze(bundle, createOpenCodeReasoner({ model: 'opencode-go/glm-5.3-flash' }))
+```
+
+The adapter spawns `opencode2 run --format json` and reads the text events. Any model from `opencode models` works, and `opencode-go/glm-5.3-flash` is the default. Each call runs in a throwaway directory with an agent that denies every tool permission, so a bundle that contains instructions cannot edit files or run commands. Pass `command: 'opencode'` if your binary uses the standard name.
 
 ## Command line
 
-The same package ships a thin `renderdragon` binary:
+The package ships one binary over both entries:
 
 ```
-renderdragon audit https://example.com --out ./renderdragon-out
-renderdragon analyze ./renderdragon-out/bundle.json --provider anthropic
+renderdragon audit https://example.com --out ./audit
+renderdragon analyze ./audit/bundle.json --provider opencode --model opencode-go/glm-5.3-flash
 ```
 
-`audit` writes the bundle and prints a metric summary (`--json` prints the bundle). `analyze` judges a bundle with a model whose provider is inferred from the environment keys unless `--provider` is given.
+`audit` writes the bundle and prints a metric summary. `analyze` infers the provider from environment keys unless `--provider` is set. `--json` makes either command print machine-readable output.
+
+## Limits
+
+This is lab data. It does not include field measurements, real users, or scripted multi-step journeys. A single run is noisy, so use `runs: 3` or more before trusting a small difference. Model output varies between calls; the bundle is the reproducible part.
 
 ## Design
 
-The decisions behind the shape live in [docs/adr](docs/adr), with a glossary in [docs/glossary.md](docs/glossary.md) and a full spec in [docs/spec.md](docs/spec.md). Read the spec before changing the interface.
+The decisions behind the shape live in [docs/adr](docs/adr), with a glossary in [docs/glossary.md](docs/glossary.md) and the full spec in [docs/spec.md](docs/spec.md). Read the spec before changing the interface.
 
 ## Development
 
@@ -92,4 +112,4 @@ npm run typecheck
 npm test
 ```
 
-Browser-dependent tests need Chrome. This repo does not vendor one; set `RENDERDRAGON_CHROME_PATH` to a Chrome binary to run them, otherwise those tests skip.
+Browser tests need Chrome. The repo does not vendor one. Set `RENDERDRAGON_CHROME_PATH` to a Chrome binary to run them; otherwise those tests skip.

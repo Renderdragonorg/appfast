@@ -42,7 +42,7 @@ Anything that reads the evidence bundle and decides what matters. It is outside 
 Variation between identical runs. Lighthouse is noisy, and a browser under load is noisier. The engine's job is to make noise visible in the bundle, so the agent can tell a real problem from an unlucky sample.
 
 ## Reasoner
-A model call shaped as text in, text out: `complete({ system, user })`. The analyze companion takes one from the caller, so the engine never depends on a model. Provider adapters for OpenAI and Anthropic satisfy it.
+A model call shaped as text in, text out: `complete({ system, user })`. The analyze companion takes one from the caller, so the engine never depends on a model. Provider adapters for OpenAI, Anthropic, and OpenCode satisfy it.
 
 ## Analysis
 The output of `analyze`: a summary plus ranked findings. Produced outside the engine, by reading a bundle. Nondeterministic, because a model writes it.

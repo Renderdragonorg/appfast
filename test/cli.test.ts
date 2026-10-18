@@ -107,6 +107,17 @@ describe('runCli', () => {
     expect(out.join('\n')).toContain('[HIGH] Slow LCP')
   })
 
+  it('passes an explicit opencode model through to the reasoner', async () => {
+    const { deps } = makeDeps()
+    const code = await runCli(
+      ['analyze', 'b.json', '--provider', 'opencode', '--model', 'opencode-go/glm-5.3-flash'],
+      deps,
+    )
+
+    expect(code).toBe(0)
+    expect(deps.createReasoner).toHaveBeenCalledWith('opencode', 'opencode-go/glm-5.3-flash')
+  })
+
   it('fails analyze when no provider is available', async () => {
     const { deps, err } = makeDeps()
     const code = await runCli(['analyze', 'b.json'], deps)
