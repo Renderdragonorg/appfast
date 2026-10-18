@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RenderDragonError } from '../../errors.js'
+import { AppFastError } from '../../errors.js'
 import type { Reasoner, ReasonRequest } from '../types.js'
 
 export interface OpenCodeReasonerOptions {
@@ -57,7 +57,7 @@ export function createOpenCodeReasoner(options: OpenCodeReasonerOptions = {}): R
   return {
     label: `opencode:${model}`,
     async complete({ system, user }: ReasonRequest): Promise<string> {
-      const cwd = await mkdtemp(join(tmpdir(), 'renderdragon-opencode-'))
+      const cwd = await mkdtemp(join(tmpdir(), 'appfast-opencode-'))
       try {
         await writeFile(join(cwd, 'opencode.json'), agentConfig(system), 'utf8')
 
@@ -65,28 +65,28 @@ export function createOpenCodeReasoner(options: OpenCodeReasonerOptions = {}): R
         try {
           result = await exec({
             command,
-            args: ['run', '--agent', 'renderdragon-analyzer', '--model', model, '--format', 'json'],
+            args: ['run', '--agent', 'appfast-analyzer', '--model', model, '--format', 'json'],
             input: user,
             cwd,
             env: options.env ?? process.env,
             timeoutMs,
           })
         } catch (error) {
-          throw new RenderDragonError(
+          throw new AppFastError(
             'ANALYSIS',
             `Could not run ${command}: ${error instanceof Error ? error.message : String(error)}`,
           )
         }
 
         if (result.code !== 0) {
-          throw new RenderDragonError(
+          throw new AppFastError(
             'ANALYSIS',
             `opencode run failed (exit ${result.code ?? 'signal'}): ${tail(result.stderr || result.stdout)}`,
           )
         }
 
         const text = stripLeadingReasoning(readTextEvents(result.stdout))
-        if (text.length === 0) throw new RenderDragonError('ANALYSIS', 'opencode returned no text')
+        if (text.length === 0) throw new AppFastError('ANALYSIS', 'opencode returned no text')
         return text
       } finally {
         await rm(cwd, { recursive: true, force: true })
@@ -100,8 +100,8 @@ function agentConfig(system: string): string {
     {
       $schema: 'https://opencode.ai/config.json',
       agents: {
-        'renderdragon-analyzer': {
-          description: 'Judges a RenderDragon evidence bundle',
+        'appfast-analyzer': {
+          description: 'Judges an AppFast evidence bundle',
           mode: 'primary',
           system,
           permissions: [{ action: '*', resource: '*', effect: 'deny' }],

@@ -1,15 +1,15 @@
-# RenderDragon perf audit engine spec
+# AppFast spec
 
 Status: draft. Built from the ADRs in `docs/adr/`. Where this file and an ADR disagree, the ADR wins.
 
-RenderDragon is a TypeScript library that audits a web page and returns an evidence bundle. It runs Lighthouse plus a set of custom synthetic checks, reports neutral facts, and stops. It does not score, rank, recommend, or call a model. A downstream agent reads the bundle and decides what matters.
+AppFast is a Renderdragon performance audit engine written in TypeScript. It audits a web page and returns an evidence bundle. It runs Lighthouse plus a set of custom synthetic checks, reports neutral facts, and stops. It does not score, rank, recommend, or call a model. A downstream agent reads the bundle and decides what matters.
 
 ## Public interface
 
 One function.
 
 ```ts
-import { audit } from 'renderdragon'
+import { audit } from 'appfast'
 
 const bundle = await audit({ url: 'https://example.com' })
 ```
@@ -381,10 +381,10 @@ The engine fails the run, it does not silently measure the wrong thing.
 
 ## Analysis (companion)
 
-`analyze` is a separate entry from the engine, `renderdragon/analyze` (ADR 0021). The engine holds no model; `analyze` takes one from the caller.
+`analyze` is a separate entry from the engine, `appfast/analyze` (ADR 0021). The engine holds no model; `analyze` takes one from the caller.
 
 ```ts
-import { analyze, createAnthropicReasoner } from 'renderdragon/analyze'
+import { analyze, createAnthropicReasoner } from 'appfast/analyze'
 
 const analysis = await analyze(bundle, createAnthropicReasoner({ model: 'claude-3-5-sonnet-latest' }))
 ```
@@ -424,13 +424,13 @@ interface EvidenceRef {
 }
 ```
 
-`analyze` sends the bundle as a digest (metrics with thresholds, observations with their ids, artifact paths, caveats), asks the reasoner for JSON of the `Analysis` shape, and validates it. Evidence references that do not resolve in the bundle are dropped. Invalid output gets one repair retry, then a `RenderDragonError` with code `ANALYSIS`.
+`analyze` sends the bundle as a digest (metrics with thresholds, observations with their ids, artifact paths, caveats), asks the reasoner for JSON of the `Analysis` shape, and validates it. Evidence references that do not resolve in the bundle are dropped. Invalid output gets one repair retry, then a `AppFastError` with code `ANALYSIS`.
 
 Shipped adapters: `createOpenAiReasoner` and `createAnthropicReasoner`, implemented with `fetch` (no SDK dependency), plus `createOpenCodeReasoner`. The first two read their key from an option or from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`. The OpenCode adapter spawns `opencode2 run --format json` and uses the caller's existing OpenCode login, so it needs no key (ADR 0024).
 
 ## CLI
 
-A thin `renderdragon` binary wraps both entries (ADR 0023): `audit <url>` calls the engine and writes a bundle, `analyze <bundle.json>` calls the companion. It adds no logic beyond argument parsing and printing, and `--json` makes both commands scriptable. `analyze --provider opencode` runs the model through OpenCode instead of a provider key.
+A thin `appfast` binary wraps both entries (ADR 0023): `audit <url>` calls the engine and writes a bundle, `analyze <bundle.json>` calls the companion. It adds no logic beyond argument parsing and printing, and `--json` makes both commands scriptable. `analyze --provider opencode` runs the model through OpenCode instead of a provider key.
 
 ## Non-goals
 

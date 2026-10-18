@@ -7,14 +7,14 @@ import { createOpenAiReasoner } from './analyze/reasoners/openai.js'
 import { createOpenCodeReasoner } from './analyze/reasoners/opencode.js'
 import type { Analysis, Reasoner } from './analyze/types.js'
 import { audit } from './audit.js'
-import { RenderDragonError } from './errors.js'
+import { AppFastError } from './errors.js'
 import type { Bundle, CheckName, Target } from './types.js'
 
-const USAGE = `renderdragon <command>
+const USAGE = `appfast <command>
 
 Commands:
   audit <url> [options]        run a lab audit and write a bundle
-    --out <dir>                output directory (default ./renderdragon-out)
+    --out <dir>                output directory (default ./appfast-out)
     --runs <n>                 repeats (default 1)
     --throttle mobile|desktop  default mobile
     --checks a,b,c             default scrollJank,heavyPayload,interactionStorm
@@ -194,7 +194,7 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
   try {
     if (parsed.command === 'audit') {
       const target: Target = { url: parsed.url }
-      target.outputDir = parsed.out ?? 'renderdragon-out'
+      target.outputDir = parsed.out ?? 'appfast-out'
       if (parsed.runs !== undefined) target.runs = parsed.runs
       if (parsed.throttle !== undefined) target.throttle = parsed.throttle
       if (parsed.checks !== undefined) target.checks = parsed.checks
@@ -207,7 +207,7 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
 
     const provider = parsed.provider ?? inferProvider(deps.env)
     if (!provider) {
-      throw new RenderDragonError(
+      throw new AppFastError(
         'CONFIG',
         'No provider: pass --provider (anthropic, openai, opencode), or set ANTHROPIC_API_KEY or OPENAI_API_KEY',
       )
@@ -231,7 +231,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       if (provider === 'anthropic') return createAnthropicReasoner(model ? { model } : {})
       if (provider === 'openai') return createOpenAiReasoner(model ? { model } : {})
       if (provider === 'opencode') return createOpenCodeReasoner(model ? { model } : {})
-      throw new RenderDragonError('CONFIG', `Unknown provider: ${provider}`)
+      throw new AppFastError('CONFIG', `Unknown provider: ${provider}`)
     },
     readTextFile: (path) => readFile(path, 'utf8'),
     io: { out: (message) => console.log(message), err: (message) => console.error(message) },

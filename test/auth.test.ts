@@ -3,7 +3,7 @@ import type { Server } from 'node:http'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { ensureSession, isLoggedOut, toCookieParams } from '../src/auth.js'
-import { RenderDragonError } from '../src/errors.js'
+import { AppFastError } from '../src/errors.js'
 import type { CheckBrowser } from '../src/browser/checkBrowser.js'
 import type { Cookie, ResolvedTarget } from '../src/types.js'
 
@@ -91,7 +91,7 @@ describe('toCookieParams', () => {
 
 // ---- Browser-dependent tests, skipped unless a Chrome binary is provided. ----
 
-const CHROME_PATH = process.env.RENDERDRAGON_CHROME_PATH
+const CHROME_PATH = process.env.APPFAST_CHROME_PATH
 
 function makeTarget(overrides: Partial<ResolvedTarget> = {}): ResolvedTarget {
   return {
@@ -132,7 +132,7 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
   it('applies headers, cookies, and viewport, and returns the loaded page', async () => {
     const server = await startServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/plain' })
-      res.end(`header=${req.headers['x-renderdragon-test'] ?? ''} cookie=${req.headers.cookie ?? ''}`)
+      res.end(`header=${req.headers['x-appfast-test'] ?? ''} cookie=${req.headers.cookie ?? ''}`)
     })
     const { browser, checkBrowser } = await newBrowser()
     try {
@@ -140,7 +140,7 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
         checkBrowser,
         makeTarget({
           url: `${server.url}/app`,
-          headers: { 'X-RenderDragon-Test': '1' },
+          headers: { 'X-AppFast-Test': '1' },
           cookies: [{ name: 'sid', value: 'abc', domain: '127.0.0.1', path: '/' }],
         }),
       )
@@ -168,7 +168,7 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
     try {
       await expect(ensureSession(checkBrowser, makeTarget({ url: `${server.url}/app` }))).rejects.toMatchObject({
         code: 'AUTH_EXPIRED',
-        name: 'RenderDragonError',
+        name: 'AppFastError',
       })
     } finally {
       await browser.close()
@@ -235,7 +235,7 @@ describe.skipIf(!CHROME_PATH)('ensureSession (browser)', () => {
             },
           }),
         ),
-      ).rejects.toBeInstanceOf(RenderDragonError)
+      ).rejects.toBeInstanceOf(AppFastError)
       expect(refreshCalls).toBe(1)
     } finally {
       await browser.close()
@@ -257,7 +257,7 @@ describe('ensureSession navigation failures', () => {
     const browser: CheckBrowser = { page, close: async () => {} }
 
     await expect(ensureSession(browser, makeTarget({ url: 'http://127.0.0.1:9/app' }))).rejects.toMatchObject({
-      name: 'RenderDragonError',
+      name: 'AppFastError',
       code: 'NAVIGATION',
       message: expect.stringContaining('http://127.0.0.1:9/app'),
     })

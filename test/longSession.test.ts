@@ -84,14 +84,14 @@ describe('longSessionDurationMs', () => {
   })
 
   it('honours a positive env override', () => {
-    vi.stubEnv('RENDERDRAGON_LONG_SESSION_MS', '5000')
+    vi.stubEnv('APPFAST_LONG_SESSION_MS', '5000')
     expect(longSessionDurationMs()).toBe(5000)
   })
 
   it('ignores non-numeric and non-positive overrides', () => {
-    vi.stubEnv('RENDERDRAGON_LONG_SESSION_MS', 'abc')
+    vi.stubEnv('APPFAST_LONG_SESSION_MS', 'abc')
     expect(longSessionDurationMs()).toBe(120000)
-    vi.stubEnv('RENDERDRAGON_LONG_SESSION_MS', '0')
+    vi.stubEnv('APPFAST_LONG_SESSION_MS', '0')
     expect(longSessionDurationMs()).toBe(120000)
   })
 })

@@ -8,7 +8,7 @@ import type { Bundle } from '../src/types.js'
 const tempDirs: string[] = []
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'renderdragon-bundle-'))
+  const dir = await mkdtemp(join(tmpdir(), 'appfast-bundle-'))
   tempDirs.push(dir)
   return dir
 }

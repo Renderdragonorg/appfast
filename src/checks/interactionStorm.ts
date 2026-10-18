@@ -40,7 +40,7 @@ export function summarizeInteractions(
 const CLICK_SELECTOR = 'button, [role="button"], input[type="button"], input[type="submit"]'
 const TEXT_SELECTOR =
   'input[type="text"], input[type="search"], input:not([type]), textarea, [contenteditable="true"]'
-const PROBE_TEXT = 'renderdragon probe'
+const PROBE_TEXT = 'appfast probe'
 const MAX_CLICKS = 10
 const MAX_TYPES = 5
 const ROUTE_COUNT = 3
@@ -105,7 +105,7 @@ async function driveRoutes(page: Page, count: number): Promise<InteractionSample
     const samples: InteractionSample[] = []
     for (let i = 0; i < routeCount; i++) {
       const t0 = performance.now()
-      location.hash = `renderdragon-${i}`
+      location.hash = `appfast-${i}`
       await new Promise<void>((resolve) => {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
       })

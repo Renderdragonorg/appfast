@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { launch } from 'chrome-launcher'
 import lighthouse from 'lighthouse'
 import type { Flags, Result as LighthouseResult, ScreenEmulationSettings, ThrottlingSettings } from 'lighthouse'
-import { RenderDragonError } from '../errors.js'
+import { AppFastError } from '../errors.js'
 import type { Artifact, MetricName, ResolvedTarget } from '../types.js'
 
 /** One raw metric reading from a single Lighthouse cold load. */
@@ -95,14 +95,14 @@ function extensionForMime(mimeType: string): string {
 }
 
 async function launchColdChrome(): Promise<ColdChrome> {
-  const chromePath = process.env.RENDERDRAGON_CHROME_PATH
+  const chromePath = process.env.APPFAST_CHROME_PATH
   try {
     return await launch({
       chromeFlags: ['--headless=new'],
       ...(chromePath ? { chromePath } : {}),
     })
   } catch (error) {
-    throw new RenderDragonError('BROWSER_LAUNCH', 'Failed to launch a cold Chrome for the Lighthouse run', {
+    throw new AppFastError('BROWSER_LAUNCH', 'Failed to launch a cold Chrome for the Lighthouse run', {
       cause: error,
     })
   }
@@ -140,10 +140,10 @@ export async function runLighthouseCold(input: LighthouseInput): Promise<Lightho
 
     const lhr = result?.lhr
     if (!lhr) {
-      throw new RenderDragonError('LIGHTHOUSE', `Lighthouse returned no report for ${target.url}`)
+      throw new AppFastError('LIGHTHOUSE', `Lighthouse returned no report for ${target.url}`)
     }
     if (lhr.runtimeError) {
-      throw new RenderDragonError('LIGHTHOUSE', lhr.runtimeError.message, { cause: lhr.runtimeError })
+      throw new AppFastError('LIGHTHOUSE', lhr.runtimeError.message, { cause: lhr.runtimeError })
     }
 
     const runDir = join(target.outputDir, `run-${repeat}`)
@@ -172,8 +172,8 @@ export async function runLighthouseCold(input: LighthouseInput): Promise<Lightho
 
     return { samples: extractMetricSamples(lhr), artifacts }
   } catch (error) {
-    if (error instanceof RenderDragonError) throw error
-    throw new RenderDragonError('LIGHTHOUSE', `Lighthouse run failed for ${target.url}`, { cause: error })
+    if (error instanceof AppFastError) throw error
+    throw new AppFastError('LIGHTHOUSE', `Lighthouse run failed for ${target.url}`, { cause: error })
   } finally {
     await chrome.kill()
   }

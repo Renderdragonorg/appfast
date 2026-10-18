@@ -7,10 +7,10 @@ Done:
 - Lighthouse cold-browser path with curated metric extraction and artifacts.
 - Shared check browser with CDP throttling; `scrollJank`, `heavyPayload`, `interactionStorm`, and opt-in `longSession`.
 - Bundle and artifact writer; session setup with auth refresh.
-- Error wrapping: `BROWSER_LAUNCH`, `NAVIGATION`, `LIGHTHOUSE`, `CHECK`, `AUTH_EXPIRED`, `CONFIG`, and `ANALYSIS` all raised as `RenderDragonError`.
+- Error wrapping: `BROWSER_LAUNCH`, `NAVIGATION`, `LIGHTHOUSE`, `CHECK`, `AUTH_EXPIRED`, `CONFIG`, and `ANALYSIS` all raised as `AppFastError`.
 - `caveats` records warm repeats and mid-run auth refreshes.
-- `renderdragon/analyze`: a validated, model-agnostic judging companion with OpenAI, Anthropic, and OpenCode adapters (ADR 0021, ADR 0024), backed by observation ids for evidence citation (ADR 0022).
-- A thin `renderdragon` CLI over both entries (ADR 0023).
+- `appfast/analyze`: a validated, model-agnostic judging companion with OpenAI, Anthropic, and OpenCode adapters (ADR 0021, ADR 0024), backed by observation ids for evidence citation (ADR 0022).
+- A thin `appfast` CLI over both entries (ADR 0023).
 
 ## Left to do
 

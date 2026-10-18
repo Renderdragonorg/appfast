@@ -1,5 +1,5 @@
 export { audit } from './audit.js'
-export { RenderDragonError } from './errors.js'
+export { AppFastError } from './errors.js'
 export type { ErrorCode } from './errors.js'
 export type {
   Artifact,

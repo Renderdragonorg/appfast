@@ -118,14 +118,14 @@ describe('createOpenCodeReasoner', () => {
     expect(seen!.args).toEqual([
       'run',
       '--agent',
-      'renderdragon-analyzer',
+      'appfast-analyzer',
       '--model',
       'opencode-go/glm-5.3-flash',
       '--format',
       'json',
     ])
     expect(seen!.input).toBe('USER')
-    expect(config!.agents['renderdragon-analyzer']).toMatchObject({
+    expect(config!.agents['appfast-analyzer']).toMatchObject({
       mode: 'primary',
       system: 'SYS',
       permissions: [{ action: '*', resource: '*', effect: 'deny' }],

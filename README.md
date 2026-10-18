@@ -1,23 +1,23 @@
 <img src="assets/icon.svg" width="64" height="64" alt="">
 
-# RenderDragon
+# AppFast
 
-RenderDragon loads a page in a real browser, runs Lighthouse and three synthetic checks, and writes a JSON evidence bundle. The bundle holds numbers and events, not scores or advice.
+AppFast is a Renderdragon performance audit engine. It loads a page in a real browser, runs Lighthouse and three synthetic checks, and writes a JSON evidence bundle. The bundle holds numbers and events, not scores or advice.
 
-A second entry, `renderdragon/analyze`, reads a bundle and returns ranked findings. You give it a model: an OpenAI key, an Anthropic key, or a model already signed in to OpenCode V2.
+A second entry, `appfast/analyze`, reads a bundle and returns ranked findings. You give it a model: an OpenAI key, an Anthropic key, or a model already signed in to OpenCode V2.
 
 Status: working. The engine, checks, analysis entry, and CLI run end to end. Browser-dependent tests need Chrome.
 
 ## Install
 
 ```
-npm install renderdragon
+npm install appfast
 ```
 
 ## Usage
 
 ```ts
-import { audit } from 'renderdragon'
+import { audit } from 'appfast'
 
 const bundle = await audit({ url: 'https://example.com' })
 console.log(bundle.metrics)       // lcp, cls, tbt, ttfb, fcp, speedIndex with spread
@@ -61,7 +61,7 @@ The default set runs on the shared browser:
 ## Judging a bundle
 
 ```ts
-import { analyze, createAnthropicReasoner } from 'renderdragon/analyze'
+import { analyze, createAnthropicReasoner } from 'appfast/analyze'
 
 const analysis = await analyze(bundle, createAnthropicReasoner({ model: 'claude-3-5-sonnet-latest' }))
 analysis.findings // ranked, each with severity, rationale, and evidence references
@@ -74,11 +74,11 @@ OpenAI and Anthropic adapters ship with the package and read `OPENAI_API_KEY` / 
 If OpenCode V2 is already signed in, you can skip provider keys:
 
 ```
-renderdragon analyze ./audit/bundle.json --provider opencode --model opencode-go/glm-5.3-flash
+appfast analyze ./audit/bundle.json --provider opencode --model opencode-go/glm-5.3-flash
 ```
 
 ```ts
-import { analyze, createOpenCodeReasoner } from 'renderdragon/analyze'
+import { analyze, createOpenCodeReasoner } from 'appfast/analyze'
 
 const analysis = await analyze(bundle, createOpenCodeReasoner({ model: 'opencode-go/glm-5.3-flash' }))
 ```
@@ -90,8 +90,8 @@ The adapter spawns `opencode2 run --format json` and reads the text events. Any 
 The package ships one binary over both entries:
 
 ```
-renderdragon audit https://example.com --out ./audit
-renderdragon analyze ./audit/bundle.json --provider opencode --model opencode-go/glm-5.3-flash
+appfast audit https://example.com --out ./audit
+appfast analyze ./audit/bundle.json --provider opencode --model opencode-go/glm-5.3-flash
 ```
 
 `audit` writes the bundle and prints a metric summary. `analyze` infers the provider from environment keys unless `--provider` is set. `--json` makes either command print machine-readable output.
@@ -112,4 +112,4 @@ npm run typecheck
 npm test
 ```
 
-Browser tests need Chrome. The repo does not vendor one. Set `RENDERDRAGON_CHROME_PATH` to a Chrome binary to run them; otherwise those tests skip.
+Browser tests need Chrome. The repo does not vendor one. Set `APPFAST_CHROME_PATH` to a Chrome binary to run them; otherwise those tests skip.

@@ -46,7 +46,7 @@ describe('extractMetricSamples', () => {
   })
 })
 
-const chromePath = process.env.RENDERDRAGON_CHROME_PATH
+const chromePath = process.env.APPFAST_CHROME_PATH
 
 describe.skipIf(!chromePath)('runLighthouseCold (real browser)', () => {
   let server: ReturnType<typeof createServer>
@@ -54,10 +54,10 @@ describe.skipIf(!chromePath)('runLighthouseCold (real browser)', () => {
   let outputDir: string
 
   beforeAll(async () => {
-    outputDir = await mkdtemp(join(tmpdir(), 'renderdragon-lh-test-'))
+    outputDir = await mkdtemp(join(tmpdir(), 'appfast-lh-test-'))
     server = createServer((_req, res) => {
       res.writeHead(200, { 'content-type': 'text/html' })
-      res.end('<!doctype html><html><head><title>perf</title></head><body><main>Hello RenderDragon</main></body></html>')
+      res.end('<!doctype html><html><head><title>perf</title></head><body><main>Hello AppFast</main></body></html>')
     })
     await new Promise<void>((resolve) => server.listen(0, resolve))
     const address = server.address()

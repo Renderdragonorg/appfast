@@ -69,7 +69,7 @@ describe('analyze', () => {
   it('retries once on invalid output and then throws ANALYSIS', async () => {
     const reasoner = reasonerReturning('not json', 'still not json')
     await expect(analyze(makeBundle(), reasoner)).rejects.toMatchObject({
-      name: 'RenderDragonError',
+      name: 'AppFastError',
       code: 'ANALYSIS',
     })
     expect(reasoner.complete).toHaveBeenCalledTimes(2)

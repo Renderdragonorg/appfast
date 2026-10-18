@@ -1,7 +1,7 @@
 {
-  "name": "renderdragon",
+  "name": "appfast",
   "version": "0.0.1",
-  "description": "RenderDragon perf audit engine. Audits a web page and returns an evidence bundle for a downstream agent to judge.",
+  "description": "AppFast, a Renderdragon performance audit engine. Audits a web page and returns an evidence bundle for a downstream agent to judge.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,7 +19,7 @@
     "dist"
   ],
   "bin": {
-    "renderdragon": "./dist/cli.js"
+    "appfast": "./dist/cli.js"
   },
   "engines": {
     "node": ">=20"

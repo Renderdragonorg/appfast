@@ -3,7 +3,7 @@ import type { CheckBrowser } from './browser/checkBrowser.js'
 import { launchCheckBrowser } from './browser/checkBrowser.js'
 import { CHECKS } from './checks/registry.js'
 import { resolveTarget } from './defaults.js'
-import { RenderDragonError } from './errors.js'
+import { AppFastError } from './errors.js'
 import { runLighthouseCold, type RawMetricSample } from './lighthouse/index.js'
 import { aggregateMetrics } from './metrics.js'
 import type { Artifact, Bundle, Observation, ObservationDraft, Target } from './types.js'
@@ -52,9 +52,9 @@ export async function audit(target: Target): Promise<Bundle> {
             detailRows: resolved.detailRows,
           })
         } catch (error) {
-          if (error instanceof RenderDragonError) throw error
+          if (error instanceof AppFastError) throw error
           const detail = error instanceof Error ? error.message : String(error)
-          throw new RenderDragonError('CHECK', `Check ${name} failed: ${detail}`, { cause: error })
+          throw new AppFastError('CHECK', `Check ${name} failed: ${detail}`, { cause: error })
         }
         drafts.forEach((draft, index) => {
           observations.push({ ...draft, id: `${name}-${repeat}-${index}` })

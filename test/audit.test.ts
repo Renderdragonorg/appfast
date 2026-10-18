@@ -104,7 +104,7 @@ describe('audit', () => {
     h.CHECKS.scrollJank.run.mockRejectedValue(new Error('boom'))
 
     await expect(audit({ url: 'https://example.com' })).rejects.toMatchObject({
-      name: 'RenderDragonError',
+      name: 'AppFastError',
       code: 'CHECK',
       message: expect.stringContaining('scrollJank'),
     })

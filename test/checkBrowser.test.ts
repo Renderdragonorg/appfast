@@ -43,9 +43,9 @@ describe('kbpsToBytesPerSecond', () => {
   })
 })
 
-const hasChrome = Boolean(process.env.RENDERDRAGON_CHROME_PATH)
+const hasChrome = Boolean(process.env.APPFAST_CHROME_PATH)
 
-describe.skipIf(!hasChrome)('launchCheckBrowser (requires RENDERDRAGON_CHROME_PATH)', () => {
+describe.skipIf(!hasChrome)('launchCheckBrowser (requires APPFAST_CHROME_PATH)', () => {
   it('launches headless Chrome, sets the viewport, and closes cleanly', async () => {
     const { launchCheckBrowser } = await import('../src/browser/checkBrowser.js')
     const server = createServer((_req, res) => {

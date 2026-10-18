@@ -1,4 +1,4 @@
-import { RenderDragonError } from '../../errors.js'
+import { AppFastError } from '../../errors.js'
 import type { Reasoner, ReasonRequest } from '../types.js'
 
 export interface OpenAiReasonerOptions {
@@ -26,7 +26,7 @@ export function createOpenAiReasoner(options: OpenAiReasonerOptions = {}): Reaso
     label: `openai:${model}`,
     async complete({ system, user }: ReasonRequest): Promise<string> {
       const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY
-      if (!apiKey) throw new RenderDragonError('ANALYSIS', 'OPENAI_API_KEY is not set')
+      if (!apiKey) throw new AppFastError('ANALYSIS', 'OPENAI_API_KEY is not set')
       const response = await fetchImpl(`${baseUrl}/chat/completions`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
@@ -39,10 +39,10 @@ export function createOpenAiReasoner(options: OpenAiReasonerOptions = {}): Reaso
           response_format: { type: 'json_object' },
         }),
       })
-      if (!response.ok) throw new RenderDragonError('ANALYSIS', `OpenAI request failed: ${response.status}`)
+      if (!response.ok) throw new AppFastError('ANALYSIS', `OpenAI request failed: ${response.status}`)
       const json = (await response.json()) as OpenAiChatResponse
       const content = json.choices?.[0]?.message?.content
-      if (typeof content !== 'string') throw new RenderDragonError('ANALYSIS', 'OpenAI response had no content')
+      if (typeof content !== 'string') throw new AppFastError('ANALYSIS', 'OpenAI response had no content')
       return content
     },
   }

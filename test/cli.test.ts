@@ -77,10 +77,10 @@ describe('runCli', () => {
 
     expect(code).toBe(0)
     expect(deps.audit).toHaveBeenCalledWith(
-      expect.objectContaining({ url: 'https://example.com', outputDir: 'renderdragon-out' }),
+      expect.objectContaining({ url: 'https://example.com', outputDir: 'appfast-out' }),
     )
     expect(out.join('\n')).toContain('lcp: 3120ms')
-    expect(out.join('\n')).toContain('renderdragon-out')
+    expect(out.join('\n')).toContain('appfast-out')
   })
 
   it('prints the bundle as JSON with --json', async () => {

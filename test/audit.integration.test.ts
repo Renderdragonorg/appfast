@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { audit } from '../src/index.js'
 import { serveDir, type ServedSite } from './helpers/serve.js'
 
-const hasChrome = Boolean(process.env.RENDERDRAGON_CHROME_PATH)
+const hasChrome = Boolean(process.env.APPFAST_CHROME_PATH)
 const siteDir = fileURLToPath(new URL('./fixtures/site', import.meta.url))
 
 describe.skipIf(!hasChrome)('audit end to end (requires Chrome)', () => {

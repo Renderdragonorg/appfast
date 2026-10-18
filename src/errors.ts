@@ -7,12 +7,12 @@ export type ErrorCode =
   | 'CONFIG'
   | 'ANALYSIS'
 
-export class RenderDragonError extends Error {
+export class AppFastError extends Error {
   readonly code: ErrorCode
 
   constructor(code: ErrorCode, message: string, options?: { cause?: unknown }) {
     super(message, options)
-    this.name = 'RenderDragonError'
+    this.name = 'AppFastError'
     this.code = code
   }
 }

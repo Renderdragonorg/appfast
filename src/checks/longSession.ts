@@ -27,10 +27,10 @@ export const DEFAULT_LONG_SESSION_MS = 120000
 
 /**
  * Returns the configured long-session duration. Override with the
- * `RENDERDRAGON_LONG_SESSION_MS` env var so tests can stay fast.
+ * `APPFAST_LONG_SESSION_MS` env var so tests can stay fast.
  */
 export function longSessionDurationMs(): number {
-  const raw = process.env.RENDERDRAGON_LONG_SESSION_MS
+  const raw = process.env.APPFAST_LONG_SESSION_MS
   if (raw) {
     const parsed = Number.parseInt(raw, 10)
     if (Number.isFinite(parsed) && parsed > 0) return parsed

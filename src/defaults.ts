@@ -1,6 +1,6 @@
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RenderDragonError } from './errors.js'
+import { AppFastError } from './errors.js'
 import type { CheckName, ResolvedTarget, Target, ThrottleProfile, Viewport } from './types.js'
 
 export const DEFAULT_RUNS = 1
@@ -20,10 +20,10 @@ function assertHttpUrl(url: string): void {
   try {
     parsed = new URL(url)
   } catch {
-    throw new RenderDragonError('CONFIG', `Target url is not a valid URL: ${String(url)}`)
+    throw new AppFastError('CONFIG', `Target url is not a valid URL: ${String(url)}`)
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw new RenderDragonError('CONFIG', `Target url must be http or https, got ${parsed.protocol}`)
+    throw new AppFastError('CONFIG', `Target url must be http or https, got ${parsed.protocol}`)
   }
 }
 
@@ -38,7 +38,7 @@ export function resolveTarget(target: Target): ResolvedTarget {
     headers: target.headers ?? {},
     cookies: target.cookies ?? [],
     checks: target.checks ?? DEFAULT_CHECKS,
-    outputDir: target.outputDir ?? join(tmpdir(), `renderdragon-${Date.now()}`),
+    outputDir: target.outputDir ?? join(tmpdir(), `appfast-${Date.now()}`),
     detailRows: DEFAULT_DETAIL_ROWS,
   }
   if (target.refreshAuth) resolved.refreshAuth = target.refreshAuth

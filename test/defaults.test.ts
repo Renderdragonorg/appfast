@@ -18,7 +18,7 @@ describe('resolveTarget', () => {
     expect(resolved.throttle).toBe('mobile')
     expect(resolved.checks).toEqual(DEFAULT_CHECKS)
     expect(resolved.detailRows).toBe(20)
-    expect(resolved.outputDir).toMatch(/renderdragon-/)
+    expect(resolved.outputDir).toMatch(/appfast-/)
   })
 
   it('does not include longSession in the default check set', () => {

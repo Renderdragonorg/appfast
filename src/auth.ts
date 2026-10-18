@@ -1,5 +1,5 @@
 import type { CookieParam, Page } from 'puppeteer-core'
-import { RenderDragonError } from './errors.js'
+import { AppFastError } from './errors.js'
 import type { CheckBrowser } from './browser/checkBrowser.js'
 import type { Cookie, Credentials, ResolvedTarget } from './types.js'
 
@@ -62,7 +62,7 @@ async function navigate(page: Page, target: ResolvedTarget): Promise<Page> {
     return page
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error)
-    throw new RenderDragonError('NAVIGATION', `Navigation to ${target.url} failed: ${detail}`, { cause: error })
+    throw new AppFastError('NAVIGATION', `Navigation to ${target.url} failed: ${detail}`, { cause: error })
   }
 }
 
@@ -76,7 +76,7 @@ export interface SessionResult {
  * Applies the target's headers, cookies, and viewport, then navigates to the
  * target URL. On a detected logout it calls `target.refreshAuth`, re-applies the
  * returned credentials, and retries once; if still logged out, or no refresh is
- * supplied, it throws `RenderDragonError` with code `AUTH_EXPIRED` (ADR 0020).
+ * supplied, it throws `AppFastError` with code `AUTH_EXPIRED` (ADR 0020).
  * Reports whether a refresh happened so the orchestrator can add a caveat.
  */
 export async function ensureSession(browser: CheckBrowser, target: ResolvedTarget): Promise<SessionResult> {
@@ -88,7 +88,7 @@ export async function ensureSession(browser: CheckBrowser, target: ResolvedTarge
   if (!isLoggedOut(target.url, loaded.url())) return { page: loaded, refreshed: false }
 
   if (!target.refreshAuth) {
-    throw new RenderDragonError(
+    throw new AppFastError(
       'AUTH_EXPIRED',
       `Logged out at ${loaded.url()} and no refreshAuth callback was supplied`,
     )
@@ -102,7 +102,7 @@ export async function ensureSession(browser: CheckBrowser, target: ResolvedTarge
 
   loaded = await navigate(page, target)
   if (isLoggedOut(target.url, loaded.url())) {
-    throw new RenderDragonError('AUTH_EXPIRED', `Still logged out after refresh at ${loaded.url()}`)
+    throw new AppFastError('AUTH_EXPIRED', `Still logged out after refresh at ${loaded.url()}`)
   }
   return { page: loaded, refreshed: true }
 }

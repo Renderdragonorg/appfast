@@ -1,4 +1,4 @@
-import { RenderDragonError } from '../errors.js'
+import { AppFastError } from '../errors.js'
 import type { Bundle } from '../types.js'
 import { buildDigest } from './digest.js'
 import type { Analysis, AnalyzeOptions, EvidenceRef, Finding, Reasoner, Severity } from './types.js'
@@ -111,5 +111,5 @@ export async function analyze(bundle: Bundle, reasoner: Reasoner, options: Analy
     }
   }
 
-  throw new RenderDragonError('ANALYSIS', `Reasoner output was not a valid analysis: ${lastError}`)
+  throw new AppFastError('ANALYSIS', `Reasoner output was not a valid analysis: ${lastError}`)
 }

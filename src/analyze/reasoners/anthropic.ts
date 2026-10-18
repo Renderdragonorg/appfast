@@ -1,4 +1,4 @@
-import { RenderDragonError } from '../../errors.js'
+import { AppFastError } from '../../errors.js'
 import type { Reasoner, ReasonRequest } from '../types.js'
 
 export interface AnthropicReasonerOptions {
@@ -27,7 +27,7 @@ export function createAnthropicReasoner(options: AnthropicReasonerOptions = {}):
     label: `anthropic:${model}`,
     async complete({ system, user }: ReasonRequest): Promise<string> {
       const apiKey = options.apiKey ?? process.env.ANTHROPIC_API_KEY
-      if (!apiKey) throw new RenderDragonError('ANALYSIS', 'ANTHROPIC_API_KEY is not set')
+      if (!apiKey) throw new AppFastError('ANALYSIS', 'ANTHROPIC_API_KEY is not set')
       const response = await fetchImpl(`${baseUrl}/messages`, {
         method: 'POST',
         headers: {
@@ -42,10 +42,10 @@ export function createAnthropicReasoner(options: AnthropicReasonerOptions = {}):
           messages: [{ role: 'user', content: user }],
         }),
       })
-      if (!response.ok) throw new RenderDragonError('ANALYSIS', `Anthropic request failed: ${response.status}`)
+      if (!response.ok) throw new AppFastError('ANALYSIS', `Anthropic request failed: ${response.status}`)
       const json = (await response.json()) as AnthropicMessageResponse
       const text = json.content?.find((block) => block.type === 'text')?.text
-      if (typeof text !== 'string') throw new RenderDragonError('ANALYSIS', 'Anthropic response had no text content')
+      if (typeof text !== 'string') throw new AppFastError('ANALYSIS', 'Anthropic response had no text content')
       return text
     },
   }
