@@ -19,7 +19,8 @@ interface OpenAiChatResponse {
  */
 export function createOpenAiReasoner(options: OpenAiReasonerOptions = {}): Reasoner {
   const model = options.model ?? 'gpt-4o-mini'
-  const baseUrl = options.baseUrl ?? 'https://api.openai.com/v1'
+  const configuredBaseUrl = options.baseUrl ?? process.env.OPENAI_BASE_URL
+  const baseUrl = (configuredBaseUrl ?? 'https://api.openai.com/v1').replace(/\/+$/, '')
   const fetchImpl = options.fetch ?? fetch
 
   return {

@@ -21,8 +21,9 @@ Commands:
     --json                     print the bundle as JSON
 
   analyze <bundle.json> [options]   judge a bundle with a model
-    --provider anthropic|openai|opencode   default: inferred from env keys
+    --provider anthropic|openai|openai-compatible|opencode   default: inferred from env keys
     --model <name>                  default: the adapter's default
+    --base-url <url>                OpenAI-compatible endpoint (or OPENAI_BASE_URL)
     --json                          print the analysis as JSON
 
   help`
@@ -42,6 +43,7 @@ export interface AnalyzeCommand {
   file: string
   provider?: string
   model?: string
+  baseUrl?: string
   json: boolean
 }
 
@@ -128,13 +130,20 @@ function parseAnalyze(args: string[]): AnalyzeCommand {
   if (typeof provider === 'string') command.provider = provider
   const model = flags.get('model')
   if (typeof model === 'string') command.model = model
+  const baseUrl = flags.get('base-url')
+  if (typeof baseUrl === 'string') command.baseUrl = baseUrl
   return command
+}
+
+export interface ReasonerConfig {
+  model?: string
+  baseUrl?: string
 }
 
 export interface CliDeps {
   audit(input: Target): Promise<Bundle>
   analyze(bundle: Bundle, reasoner: Reasoner): Promise<Analysis>
-  createReasoner(provider: string, model?: string): Reasoner
+  createReasoner(provider: string, config?: ReasonerConfig): Reasoner
   readTextFile(path: string): Promise<string>
   io: { out(message: string): void; err(message: string): void }
   env: NodeJS.ProcessEnv
@@ -209,11 +218,14 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
     if (!provider) {
       throw new AppFastError(
         'CONFIG',
-        'No provider: pass --provider (anthropic, openai, opencode), or set ANTHROPIC_API_KEY or OPENAI_API_KEY',
+        'No provider: pass --provider (anthropic, openai, openai-compatible, opencode), or set ANTHROPIC_API_KEY or OPENAI_API_KEY',
       )
     }
     const bundle = JSON.parse(await deps.readTextFile(parsed.file)) as Bundle
-    const analysis = await deps.analyze(bundle, deps.createReasoner(provider, parsed.model))
+    const config: ReasonerConfig = {}
+    if (parsed.model !== undefined) config.model = parsed.model
+    if (parsed.baseUrl !== undefined) config.baseUrl = parsed.baseUrl
+    const analysis = await deps.analyze(bundle, deps.createReasoner(provider, config))
     if (parsed.json) deps.io.out(JSON.stringify(analysis, null, 2))
     else printAnalysis(analysis, deps.io.out)
     return 0
@@ -227,9 +239,20 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
   const code = await runCli(argv, {
     audit,
     analyze: analyzeBundle,
-    createReasoner: (provider, model) => {
-      if (provider === 'anthropic') return createAnthropicReasoner(model ? { model } : {})
-      if (provider === 'openai') return createOpenAiReasoner(model ? { model } : {})
+    createReasoner: (provider, config = {}) => {
+      const { model, baseUrl } = config
+      if (provider === 'anthropic') {
+        const options: { model?: string; baseUrl?: string } = {}
+        if (model !== undefined) options.model = model
+        if (baseUrl !== undefined) options.baseUrl = baseUrl
+        return createAnthropicReasoner(options)
+      }
+      if (provider === 'openai' || provider === 'openai-compatible') {
+        const options: { model?: string; baseUrl?: string } = {}
+        if (model !== undefined) options.model = model
+        if (baseUrl !== undefined) options.baseUrl = baseUrl
+        return createOpenAiReasoner(options)
+      }
       if (provider === 'opencode') return createOpenCodeReasoner(model ? { model } : {})
       throw new AppFastError('CONFIG', `Unknown provider: ${provider}`)
     },

@@ -38,6 +38,18 @@ describe('parseArgs', () => {
     })
   })
 
+  it('parses an OpenAI-compatible base URL', () => {
+    expect(
+      parseArgs(['analyze', 'b.json', '--provider', 'openai-compatible', '--base-url', 'https://compat.test/v1']),
+    ).toEqual({
+      command: 'analyze',
+      file: 'b.json',
+      provider: 'openai-compatible',
+      baseUrl: 'https://compat.test/v1',
+      json: false,
+    })
+  })
+
   it('rejects a bad runs value, a bad throttle, and unknown commands', () => {
     expect(() => parseArgs(['audit', 'https://x', '--runs', 'zero'])).toThrow(/runs/)
     expect(() => parseArgs(['audit', 'https://x', '--throttle', 'fast'])).toThrow(/throttle/)
@@ -103,7 +115,7 @@ describe('runCli', () => {
     const code = await runCli(['analyze', 'b.json'], deps)
 
     expect(code).toBe(0)
-    expect(deps.createReasoner).toHaveBeenCalledWith('anthropic', undefined)
+    expect(deps.createReasoner).toHaveBeenCalledWith('anthropic', {})
     expect(out.join('\n')).toContain('[HIGH] Slow LCP')
   })
 
@@ -115,7 +127,30 @@ describe('runCli', () => {
     )
 
     expect(code).toBe(0)
-    expect(deps.createReasoner).toHaveBeenCalledWith('opencode', 'opencode-go/glm-5.3-flash')
+    expect(deps.createReasoner).toHaveBeenCalledWith('opencode', { model: 'opencode-go/glm-5.3-flash' })
+  })
+
+  it('passes a custom OpenAI-compatible endpoint through to the reasoner', async () => {
+    const { deps } = makeDeps()
+    const code = await runCli(
+      [
+        'analyze',
+        'b.json',
+        '--provider',
+        'openai-compatible',
+        '--model',
+        'llama-3.1-8b',
+        '--base-url',
+        'https://compat.test/v1',
+      ],
+      deps,
+    )
+
+    expect(code).toBe(0)
+    expect(deps.createReasoner).toHaveBeenCalledWith('openai-compatible', {
+      model: 'llama-3.1-8b',
+      baseUrl: 'https://compat.test/v1',
+    })
   })
 
   it('fails analyze when no provider is available', async () => {

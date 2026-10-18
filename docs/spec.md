@@ -426,11 +426,11 @@ interface EvidenceRef {
 
 `analyze` sends the bundle as a digest (metrics with thresholds, observations with their ids, artifact paths, caveats), asks the reasoner for JSON of the `Analysis` shape, and validates it. Evidence references that do not resolve in the bundle are dropped. Invalid output gets one repair retry, then a `AppFastError` with code `ANALYSIS`.
 
-Shipped adapters: `createOpenAiReasoner` and `createAnthropicReasoner`, implemented with `fetch` (no SDK dependency), plus `createOpenCodeReasoner`. The first two read their key from an option or from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`. The OpenCode adapter spawns `opencode2 run --format json` and uses the caller's existing OpenCode login, so it needs no key (ADR 0024).
+Shipped adapters: `createOpenAiReasoner` and `createAnthropicReasoner`, implemented with `fetch` (no SDK dependency), plus `createOpenCodeReasoner`. The first two read their key from an option or from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`. The OpenAI adapter also takes a `baseUrl` or `OPENAI_BASE_URL`, so any server with a compatible `/chat/completions` endpoint works. The OpenCode adapter spawns `opencode2 run --format json` and uses the caller's existing OpenCode login, so it needs no key (ADR 0024).
 
 ## CLI
 
-A thin `appfast` binary wraps both entries (ADR 0023): `audit <url>` calls the engine and writes a bundle, `analyze <bundle.json>` calls the companion. It adds no logic beyond argument parsing and printing, and `--json` makes both commands scriptable. `analyze --provider opencode` runs the model through OpenCode instead of a provider key.
+A thin `appfast` binary wraps both entries (ADR 0023): `audit <url>` calls the engine and writes a bundle, `analyze <bundle.json>` calls the companion. It adds no logic beyond argument parsing and printing, and `--json` makes both commands scriptable. `analyze --provider opencode` runs the model through OpenCode instead of a provider key, and `analyze --provider openai-compatible --base-url <url>` points the OpenAI adapter at a compatible endpoint.
 
 ## Non-goals
 

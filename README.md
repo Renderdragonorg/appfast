@@ -69,6 +69,24 @@ analysis.findings // ranked, each with severity, rationale, and evidence referen
 
 OpenAI and Anthropic adapters ship with the package and read `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` unless you pass a key. The analyzer checks model output before returning it: unknown evidence references are dropped, and invalid JSON gets one repair retry.
 
+### OpenAI-compatible endpoints
+
+The OpenAI adapter takes a base URL, so it also works with OpenRouter, Together, vLLM, LM Studio, Ollama, and any server that implements `POST /chat/completions`:
+
+```
+OPENAI_API_KEY=... appfast analyze ./audit/bundle.json --provider openai-compatible --base-url https://openrouter.ai/api/v1 --model openai/gpt-4o-mini
+```
+
+Set `OPENAI_BASE_URL` instead of `--base-url` if you use one endpoint often. The key still comes from `OPENAI_API_KEY`; local servers that ignore auth accept any non-empty value. In code, pass `baseUrl` to `createOpenAiReasoner`.
+
+```ts
+createOpenAiReasoner({
+  baseUrl: 'http://localhost:11434/v1',
+  model: 'llama3.1',
+  apiKey: 'ollama',
+})
+```
+
 ## Running analysis through OpenCode
 
 If OpenCode V2 is already signed in, you can skip provider keys:

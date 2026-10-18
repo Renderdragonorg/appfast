@@ -39,6 +39,21 @@ describe('createOpenAiReasoner', () => {
     await expect(reasoner.complete({ system: 's', user: 'u' })).rejects.toMatchObject({ code: 'ANALYSIS' })
   })
 
+  it('reads an OpenAI-compatible endpoint from OPENAI_BASE_URL', async () => {
+    const previous = process.env.OPENAI_BASE_URL
+    process.env.OPENAI_BASE_URL = 'https://compat.test/v1///'
+    try {
+      const { calls, impl } = captureFetch({ choices: [{ message: { content: 'ok' } }] })
+      const reasoner = createOpenAiReasoner({ apiKey: 'k', fetch: impl })
+
+      expect(await reasoner.complete({ system: 's', user: 'u' })).toBe('ok')
+      expect(calls[0]!.url).toBe('https://compat.test/v1/chat/completions')
+    } finally {
+      if (previous === undefined) delete process.env.OPENAI_BASE_URL
+      else process.env.OPENAI_BASE_URL = previous
+    }
+  })
+
   it('throws ANALYSIS without calling out when no key is available', async () => {
     const previous = process.env.OPENAI_API_KEY
     delete process.env.OPENAI_API_KEY
